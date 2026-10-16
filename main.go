@@ -36,7 +36,7 @@ const traceHeaderLen = 16
 func main() {
 	out := flag.String("o", "", "output file; .gz suffix gzips it (default stdout)")
 	groupBy := flag.String("group-by", "", "pprof: split samples into threads by this label")
-	minGo := flag.Duration("min-goroutine", time.Millisecond, "trace: hide goroutines running less than this without CPU samples")
+	minGo := flag.Duration("min-goroutine", time.Millisecond, "trace: hide goroutines active (running or in syscalls) less than this, or under 1% of their lifetime")
 	minState := flag.Duration("min-state", 0, "trace: drop goroutine state markers shorter than this, e.g. 100us")
 	stacks := flag.String("stacks", "all", "trace: goroutine states turned into call-tree samples: all, blocked (off-CPU only) or off")
 	open := flag.Bool("open", false, "open result in profiler.firefox.com")

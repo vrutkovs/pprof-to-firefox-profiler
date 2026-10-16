@@ -33,7 +33,9 @@ The input format is detected by its header.
 Traces from Go 1.11 and later are read with `golang.org/x/exp/trace`.
 
 - One process with one thread per goroutine, named after its outermost non-stdlib function, e.g. `main.worker #42`.
-  Goroutines that ran less than `-min-goroutine` (default 1ms) and have no CPU samples are hidden; enable them from the track menu.
+  Mostly-waiting goroutines are hidden; enable them from the track menu. A goroutine is shown if its active time
+  (Running, CPU samples, or syscalls including cgo) is at least `-min-goroutine` (default 1ms) and at least 1% of its lifetime.
+  Runtime blocking waits that look like syscalls, e.g. `os/signal.loop`, don't count as active.
 - Extra tracks: `GC` (mark phase, stop-the-world), `Tasks` (all `runtime/trace` tasks), `No goroutine` (samples outside goroutines).
   Each task is also copied onto the goroutines that started and ended it. Its tooltip lists every goroutine that ran a region or log for it.
 - Call tree: each goroutine state interval becomes a sample weighted by its duration, under a root frame naming the state:
