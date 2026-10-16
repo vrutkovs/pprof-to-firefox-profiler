@@ -61,3 +61,7 @@ Traces from Go 1.11 and later are read with `golang.org/x/exp/trace`.
 - Busy traces produce millions of state markers, e.g. 400 goroutines doing channel ping-pong for 0.3 s give 4.8M markers. Use `-min-state 10us` or more.
 - Traces don't record the CPU profile rate; the default 100 Hz is assumed.
 - `-open` serves the profile once on `127.0.0.1` and exits after the profiler fetches it, or after 2 minutes.
+
+## License
+
+[Apache License 2.0](LICENSE)
