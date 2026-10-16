@@ -1,0 +1,4 @@
+/pprof2ff
+*.pprof
+*.json
+*.json.gz
