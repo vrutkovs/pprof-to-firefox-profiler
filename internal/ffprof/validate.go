@@ -22,6 +22,10 @@ func Validate(p *Profile) error {
 		tables[fmt.Sprintf("threads[%d].markers", i)] = &t.Markers
 	}
 
+	for i, c := range p.Counters {
+		tables[fmt.Sprintf("counters[%d].samples", i)] = &c.Samples
+	}
+
 	for name, t := range tables {
 		if err := checkColumns(t); err != nil {
 			return fmt.Errorf("%s: %w", name, err)
@@ -110,6 +114,20 @@ func checkIndices(p *Profile) error {
 			if err := inRange("sample stack", st, s.StackTable.Length); err != nil {
 				return err
 			}
+		}
+		for i, c := range t.Markers.Category {
+			if err := inRange("marker category", c, ncat); err != nil {
+				return err
+			}
+			if err := inRange("marker name", t.Markers.Name[i], nstr); err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, c := range p.Counters {
+		if err := inRange("counter thread", int32(c.MainThreadIndex), len(p.Threads)); err != nil {
+			return err
 		}
 	}
 	return nil

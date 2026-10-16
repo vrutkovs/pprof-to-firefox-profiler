@@ -2,3 +2,6 @@
 *.pprof
 *.json
 *.json.gz
+*.out
+*.trace
+*.test

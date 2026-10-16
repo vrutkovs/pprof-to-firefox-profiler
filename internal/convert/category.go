@@ -14,6 +14,7 @@ const (
 	catRuntime
 	catGC
 	catSyscall
+	catBlocked
 )
 
 var categories = []ffprof.Category{
@@ -22,6 +23,7 @@ var categories = []ffprof.Category{
 	catRuntime: {Name: "Go runtime", Color: "orange", Subcategories: []string{"Other"}},
 	catGC:      {Name: "GC", Color: "green", Subcategories: []string{"Other"}},
 	catSyscall: {Name: "Syscall", Color: "red", Subcategories: []string{"Other"}},
+	catBlocked: {Name: "Blocked", Color: "yellow", Subcategories: []string{"Other"}},
 }
 
 // gcPrefixes match runtime functions doing GC work: marking, sweeping, scavenging, assists.

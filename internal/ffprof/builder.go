@@ -45,7 +45,7 @@ func NewBuilder(meta Meta) *Builder {
 	meta.Version = GeckoVersion
 	meta.PreprocessedProfileVersion = ProcessedVersion
 	if meta.MarkerSchema == nil {
-		meta.MarkerSchema = []any{}
+		meta.MarkerSchema = []MarkerSchema{}
 	}
 
 	return &Builder{
@@ -53,7 +53,7 @@ func NewBuilder(meta Meta) *Builder {
 			Meta:     meta,
 			Libs:     []Lib{},
 			Pages:    []any{},
-			Counters: []any{},
+			Counters: []*Counter{},
 			Threads:  []*Thread{},
 			Shared:   emptyShared(),
 		},

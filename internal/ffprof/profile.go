@@ -33,24 +33,26 @@ const (
 const resourceTypeUnknown = 0
 
 type Profile struct {
-	Meta     Meta      `json:"meta"`
-	Libs     []Lib     `json:"libs"`
-	Pages    []any     `json:"pages"`
-	Counters []any     `json:"counters"`
-	Shared   Shared    `json:"shared"`
-	Threads  []*Thread `json:"threads"`
+	Meta     Meta       `json:"meta"`
+	Libs     []Lib      `json:"libs"`
+	Pages    []any      `json:"pages"`
+	Counters []*Counter `json:"counters"`
+	Shared   Shared     `json:"shared"`
+	Threads  []*Thread  `json:"threads"`
 }
 
 type Meta struct {
 	Interval                   float64        `json:"interval"`
 	StartTime                  float64        `json:"startTime"`
+	ProfilingStartTime         *float64       `json:"profilingStartTime,omitempty"`
+	ProfilingEndTime           *float64       `json:"profilingEndTime,omitempty"`
 	ProcessType                int            `json:"processType"`
 	Categories                 []Category     `json:"categories"`
 	Product                    string         `json:"product"`
 	Stackwalk                  int            `json:"stackwalk"`
 	Version                    int            `json:"version"`
 	PreprocessedProfileVersion int            `json:"preprocessedProfileVersion"`
-	MarkerSchema               []any          `json:"markerSchema"`
+	MarkerSchema               []MarkerSchema `json:"markerSchema"`
 	Symbolicated               bool           `json:"symbolicated"`
 	SymbolicationNotSupported  bool           `json:"symbolicationNotSupported"`
 	UsesOnlyOneStackType       bool           `json:"usesOnlyOneStackType"`
@@ -165,19 +167,107 @@ type SourceLocationTable struct {
 }
 
 type Thread struct {
-	ProcessType         string   `json:"processType"`
-	ProcessStartupTime  float64  `json:"processStartupTime"`
-	ProcessShutdownTime *float64 `json:"processShutdownTime"`
-	RegisterTime        float64  `json:"registerTime"`
-	UnregisterTime      *float64 `json:"unregisterTime"`
-	PausedRanges        []any    `json:"pausedRanges"`
-	Name                string   `json:"name"`
-	ProcessName         string   `json:"processName,omitempty"`
-	IsMainThread        bool     `json:"isMainThread"`
-	Pid                 string   `json:"pid"`
-	Tid                 int      `json:"tid"`
-	Samples             Samples  `json:"samples"`
-	Markers             Markers  `json:"markers"`
+	ProcessType           string   `json:"processType"`
+	ProcessStartupTime    float64  `json:"processStartupTime"`
+	ProcessShutdownTime   *float64 `json:"processShutdownTime"`
+	RegisterTime          float64  `json:"registerTime"`
+	UnregisterTime        *float64 `json:"unregisterTime"`
+	PausedRanges          []any    `json:"pausedRanges"`
+	ShowMarkersInTimeline bool     `json:"showMarkersInTimeline,omitempty"`
+	Name                  string   `json:"name"`
+	ProcessName           string   `json:"processName,omitempty"`
+	IsMainThread          bool     `json:"isMainThread"`
+	Pid                   string   `json:"pid"`
+	Tid                   int      `json:"tid"`
+	Samples               Samples  `json:"samples"`
+	Markers               Markers  `json:"markers"`
+}
+
+// Marker phases (MarkerPhase in profile.ts).
+const (
+	PhaseInstant  = 0
+	PhaseInterval = 1
+)
+
+// Add appends one marker. For instant markers end is ignored.
+func (m *Markers) Add(name int32, start, end float64, phase, category int32, data any) {
+	m.Name = append(m.Name, name)
+	m.StartTime = append(m.StartTime, start)
+	m.EndTime = append(m.EndTime, end)
+	m.Phase = append(m.Phase, phase)
+	m.Category = append(m.Category, category)
+	m.Data = append(m.Data, data)
+	m.Length++
+}
+
+// Cause is a marker backtrace (CauseBacktrace in markers.ts).
+type Cause struct {
+	Tid   int     `json:"tid"`
+	Time  float64 `json:"time"`
+	Stack int32   `json:"stack"`
+}
+
+type MarkerSchema struct {
+	Name         string        `json:"name"`
+	TooltipLabel string        `json:"tooltipLabel,omitempty"`
+	TableLabel   string        `json:"tableLabel,omitempty"`
+	ChartLabel   string        `json:"chartLabel,omitempty"`
+	Display      []string      `json:"display"`
+	Fields       []MarkerField `json:"fields"`
+	Description  string        `json:"description,omitempty"`
+	IsStackBased bool          `json:"isStackBased,omitempty"`
+}
+
+type MarkerField struct {
+	Key    string `json:"key"`
+	Label  string `json:"label,omitempty"`
+	Format string `json:"format"`
+	Hidden bool   `json:"hidden,omitempty"`
+}
+
+// Counter is a RawCounter. Count holds deltas; the graph shows their running sum.
+type Counter struct {
+	Name            string         `json:"name"`
+	Category        string         `json:"category"`
+	Description     string         `json:"description"`
+	Pid             string         `json:"pid"`
+	MainThreadIndex int            `json:"mainThreadIndex"`
+	Samples         CounterSamples `json:"samples"`
+	Display         CounterDisplay `json:"display"`
+}
+
+type CounterSamples struct {
+	Time   []float64 `json:"time"`
+	Count  []float64 `json:"count"`
+	Length int       `json:"length"`
+}
+
+// Add appends a delta sample.
+func (s *CounterSamples) Add(time, delta float64) {
+	s.Time = append(s.Time, time)
+	s.Count = append(s.Count, delta)
+	s.Length++
+}
+
+type CounterDisplay struct {
+	GraphType            string       `json:"graphType"`
+	Unit                 string       `json:"unit"`
+	Color                string       `json:"color"`
+	MarkerSchemaLocation *string      `json:"markerSchemaLocation"`
+	SortWeight           int          `json:"sortWeight"`
+	Label                string       `json:"label"`
+	TooltipRows          []TooltipRow `json:"tooltipRows"`
+}
+
+type TooltipRow struct {
+	Type   string        `json:"type"`
+	Source string        `json:"source"`
+	Format TooltipFormat `json:"format"`
+	Label  string        `json:"label"`
+}
+
+type TooltipFormat struct {
+	Unit string `json:"unit"`
 }
 
 type Samples struct {

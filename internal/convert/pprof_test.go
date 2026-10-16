@@ -253,11 +253,12 @@ func TestRealProfiles(t *testing.T) {
 	}
 }
 
-var sink []byte
-
-func burn(d time.Duration) {
+// burn spins the CPU, allocating as it goes.
+func burn(d time.Duration) []byte {
+	var b []byte
 	for end := time.Now().Add(d); time.Now().Before(end); {
-		h := sha256.Sum256(sink)
-		sink = append(make([]byte, 0, 64), h[:]...)
+		h := sha256.Sum256(b)
+		b = append(make([]byte, 0, 64), h[:]...)
 	}
+	return b
 }
