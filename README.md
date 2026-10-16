@@ -36,7 +36,19 @@ Traces from Go 1.11 and later are read with `golang.org/x/exp/trace`.
   Goroutines that ran less than `-min-goroutine` (default 1ms) and have no CPU samples are hidden; enable them from the track menu.
 - Extra tracks: `GC` (mark phase, stop-the-world), `Tasks` (all `runtime/trace` tasks), `No goroutine` (samples outside goroutines).
   Each task is also copied onto the goroutines that started and ended it. Its tooltip lists every goroutine that ran a region or log for it.
-- CPU samples become samples at their real time. They only exist if a CPU profile was running during the trace.
+- Call tree: each goroutine state interval becomes a sample weighted by its duration, under a root frame naming the state:
+  - `Waiting: <reason>`, `Syscall`: stack where the goroutine blocked
+  - `Runnable (scheduler latency)`: stack where it last stopped
+  - `Running`: real CPU samples (10 ms each) if a CPU profile ran during the trace; otherwise the stack where the
+    goroutine stopped running, which is approximate: a hot loop is charged to wherever it later blocked.
+
+  Off-CPU frames take the state's category color. `-stacks blocked` keeps off-CPU states only, `-stacks off` keeps CPU samples only.
+  Use the call tree's "focus on function" on a root to look at one state.
+- To get CPU samples, fetch a CPU profile while tracing:
+  ```sh
+  curl -s -o cpu.pprof "$URL/debug/pprof/profile?seconds=7" & sleep 1
+  curl -s -o trace.out "$URL/debug/pprof/trace?seconds=5"; wait
+  ```
 - Markers:
   - Goroutine states `Running`, `Runnable`, `Waiting`, `Syscall`, with reason and P/M. Waiting and syscall markers carry the blocking stack.
   - `runtime/trace` regions and logs on their goroutine.

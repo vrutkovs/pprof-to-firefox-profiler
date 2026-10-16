@@ -3,6 +3,11 @@
 // Schema: https://github.com/firefox-devtools/profiler/blob/main/src/types/profile.ts
 package ffprof
 
+import (
+	"cmp"
+	"slices"
+)
+
 const (
 	GeckoVersion     = 37
 	ProcessedVersion = 75
@@ -284,6 +289,25 @@ func (s *Samples) Add(stack int32, time, weight float64) {
 	s.Time = append(s.Time, time)
 	s.Weight = append(s.Weight, weight)
 	s.Length++
+}
+
+// SortByTime stably orders samples by time.
+func (s *Samples) SortByTime() {
+	if slices.IsSorted(s.Time) {
+		return
+	}
+
+	idx := make([]int, s.Length)
+	for i := range idx {
+		idx[i] = i
+	}
+	slices.SortStableFunc(idx, func(a, b int) int { return cmp.Compare(s.Time[a], s.Time[b]) })
+
+	stack, time, weight := make([]int32, s.Length), make([]float64, s.Length), make([]float64, s.Length)
+	for i, j := range idx {
+		stack[i], time[i], weight[i] = s.Stack[j], s.Time[j], s.Weight[j]
+	}
+	s.Stack, s.Time, s.Weight = stack, time, weight
 }
 
 type Markers struct {

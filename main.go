@@ -24,8 +24,8 @@ import (
 
 const (
 	openTimeout = 2 * time.Minute
-	// manyMarkers is roughly where the profiler UI gets sluggish.
-	manyMarkers = 1_000_000
+	// manyEntries is roughly where the profiler UI gets sluggish.
+	manyEntries = 1_000_000
 )
 
 // traceHeader matches Go execution trace files, e.g. "go 1.23 trace\x00\x00\x00".
@@ -38,6 +38,7 @@ func main() {
 	groupBy := flag.String("group-by", "", "pprof: split samples into threads by this label")
 	minGo := flag.Duration("min-goroutine", time.Millisecond, "trace: hide goroutines running less than this without CPU samples")
 	minState := flag.Duration("min-state", 0, "trace: drop goroutine state markers shorter than this, e.g. 100us")
+	stacks := flag.String("stacks", "all", "trace: goroutine states turned into call-tree samples: all, blocked (off-CPU only) or off")
 	open := flag.Bool("open", false, "open result in profiler.firefox.com")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "usage: pprof2ff [flags] <profile|trace|->\n")
@@ -50,9 +51,15 @@ func main() {
 		os.Exit(2)
 	}
 
+	mode, err := convert.ParseStackMode(*stacks)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "pprof2ff:", err)
+		os.Exit(2)
+	}
+
 	opts := options{
 		pprof: convert.Options{GroupBy: *groupBy},
-		trace: convert.TraceOptions{MinGoroutine: *minGo, MinState: *minState},
+		trace: convert.TraceOptions{MinGoroutine: *minGo, MinState: *minState, Stacks: mode},
 	}
 	if err := run(flag.Arg(0), *out, opts, *open); err != nil {
 		fmt.Fprintln(os.Stderr, "pprof2ff:", err)
@@ -110,21 +117,19 @@ func convertInput(r *bufio.Reader, opts options) (*ffprof.Profile, error) {
 	if opts.pprof.GroupBy != "" {
 		return nil, errors.New("-group-by applies to pprof profiles only")
 	}
-	p, err := convert.Trace(r, opts.trace)
+	p, st, err := convert.Trace(r, opts.trace)
 	if err != nil {
 		return nil, err
 	}
 
-	samples, markers := 0, 0
-	for _, t := range p.Threads {
-		samples += t.Samples.Length
-		markers += t.Markers.Length
+	if st.ApproxRunning {
+		fmt.Fprintln(os.Stderr, "pprof2ff: trace has no CPU samples; Running time is attributed to where goroutines stopped running (approximate). Fetch /debug/pprof/profile during the trace for real CPU stacks")
 	}
-	if samples == 0 {
-		fmt.Fprintln(os.Stderr, "pprof2ff: trace has no CPU samples; record a CPU profile alongside it (e.g. go test -trace t.out -cpuprofile c.out) for call trees")
+	if st.Markers > manyEntries {
+		fmt.Fprintf(os.Stderr, "pprof2ff: %d markers may be too many for the browser; try -min-state 100us\n", st.Markers)
 	}
-	if markers > manyMarkers {
-		fmt.Fprintf(os.Stderr, "pprof2ff: %d markers may be too many for the browser; try -min-state 100us\n", markers)
+	if st.Samples > manyEntries {
+		fmt.Fprintf(os.Stderr, "pprof2ff: %d samples may be too many for the browser; try -stacks blocked or off\n", st.Samples)
 	}
 	return p, nil
 }
