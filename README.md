@@ -55,6 +55,9 @@ Traces from Go 1.11 and later are read with `golang.org/x/exp/trace`.
   - Goroutine states `Running`, `Runnable`, `Waiting`, `Syscall`, with reason and P/M. Waiting and syscall markers carry the blocking stack.
   - `runtime/trace` regions and logs on their goroutine.
   - Mark assists and incremental sweeps on the goroutine that did them.
+  - `os.(*File).Write` syscalls from `os/file.go` appear as `Disk Write` in the call tree and File IO lane. This measures syscall time, not physical write completion.
+  - `os.(*File).ReadAt` and `os.(*File).Stat` syscalls appear as `Disk Read`. On Unix, `Stat` is defined in `os/stat_unix.go`.
+  - Classified write, read, and network I/O intervals use `Disk Write`, `Disk Read`, and `Network` categories for call-tree frames and I/O markers. Goroutine-state markers retain `Syscall` or `Blocked`.
 - Counters: heap live, heap goal, GOMAXPROCS, goroutine count.
 
 ## Limits

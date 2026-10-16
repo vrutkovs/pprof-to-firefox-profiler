@@ -15,15 +15,21 @@ const (
 	catGC
 	catSyscall
 	catBlocked
+	catDiskRead
+	catDiskWrite
+	catNetwork
 )
 
 var categories = []ffprof.Category{
-	catOther:   {Name: "Other", Color: "grey", Subcategories: []string{"Other"}},
-	catUser:    {Name: "User", Color: "blue", Subcategories: []string{"Other"}},
-	catRuntime: {Name: "Go runtime", Color: "orange", Subcategories: []string{"Other"}},
-	catGC:      {Name: "GC", Color: "green", Subcategories: []string{"Other"}},
-	catSyscall: {Name: "Syscall", Color: "red", Subcategories: []string{"Other"}},
-	catBlocked: {Name: "Blocked", Color: "yellow", Subcategories: []string{"Other"}},
+	catOther:     {Name: "Other", Color: "grey", Subcategories: []string{"Other"}},
+	catUser:      {Name: "User", Color: "blue", Subcategories: []string{"Other"}},
+	catRuntime:   {Name: "Go runtime", Color: "orange", Subcategories: []string{"Other"}},
+	catGC:        {Name: "GC", Color: "green", Subcategories: []string{"Other"}},
+	catSyscall:   {Name: "Syscall", Color: "red", Subcategories: []string{"Other"}},
+	catBlocked:   {Name: "Blocked", Color: "yellow", Subcategories: []string{"Other"}},
+	catDiskRead:  {Name: "Disk Read", Color: "lightblue", Subcategories: []string{"Other"}},
+	catDiskWrite: {Name: "Disk Write", Color: "brown", Subcategories: []string{"Other"}},
+	catNetwork:   {Name: "Network", Color: "purple", Subcategories: []string{"Other"}},
 }
 
 // gcPrefixes match runtime functions doing GC work: marking, sweeping, scavenging, assists.
