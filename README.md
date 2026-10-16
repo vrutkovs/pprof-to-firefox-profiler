@@ -34,7 +34,8 @@ Traces from Go 1.11 and later are read with `golang.org/x/exp/trace`.
 
 - One process with one thread per goroutine, named after its outermost non-stdlib function, e.g. `main.worker #42`.
   Goroutines that ran less than `-min-goroutine` (default 1ms) and have no CPU samples are hidden; enable them from the track menu.
-- Extra tracks: `GC` (mark phase, stop-the-world), `Tasks` (`runtime/trace` tasks), `No goroutine` (samples outside goroutines).
+- Extra tracks: `GC` (mark phase, stop-the-world), `Tasks` (all `runtime/trace` tasks), `No goroutine` (samples outside goroutines).
+  Each task is also copied onto the goroutines that started and ended it. Its tooltip lists every goroutine that ran a region or log for it.
 - CPU samples become samples at their real time. They only exist if a CPU profile was running during the trace.
 - Markers:
   - Goroutine states `Running`, `Runnable`, `Waiting`, `Syscall`, with reason and P/M. Waiting and syscall markers carry the blocking stack.
